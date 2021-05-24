@@ -220,5 +220,43 @@ void CMesh::Init(CModelX*model){
 		printf("%10d", mpVertexIndex[i+1]);
 		printf("%10d\n", mpVertexIndex[i+2]);
 	}
+	model->GetToken();   //MeshNormals
+	if (strcmp(model->mToken, "MeshNormals") == 0){
+		model->GetToken();
+		//法線データ数を取得
+		mNormalNum = model->GetIntToken();
+		//法線のデータを配列に取り込む
+		CVector*pNormal = new CVector[mNormalNum];
+		for (int i = 0; i < mNormalNum; i++){
+			pNormal[i].mX = model->GetFloatToken();
+			pNormal[i].mY = model->GetFloatToken();
+			pNormal[i].mZ = model->GetFloatToken();
+		}
+		//法線数=面数x3
+		mNormalNum = model->GetIntToken() * 3;//FanceNum
+		int ni;
+		//頂点毎に法線データを設定する
+		mpNormal = new CVector[mNormalNum];
+		for (int i = 0; i < mNormalNum; i += 3){
+			model->GetToken();//3
+			ni = model->GetIntToken();
+			mpNormal[i] = pNormal[ni];
 
+			ni = model->GetIntToken();
+			mpNormal[i + 1] = pNormal[ni];
+
+			ni = model->GetIntToken();
+			mpNormal[i + 2] = pNormal[ni];
+		}
+		delete[] pNormal;
+		model->GetToken();   //}
+	}
+	printf("NormalNum:%d\n", mNormalNum);
+	for (int i = 0; i < mNormalNum; i ++)
+	{
+		printf("%10f", mpNormal[i].mX);
+		printf("%10f", mpNormal[i].mY);
+		printf("%10f\n", mpNormal[i].mZ);
+	}
+	
 }
