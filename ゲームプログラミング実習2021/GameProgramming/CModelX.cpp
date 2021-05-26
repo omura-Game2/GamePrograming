@@ -200,25 +200,25 @@ void CMesh::Init(CModelX*model){
 	printf("VertexNum,%d\n", mVertexNum);
 	for (int i = 0; i < mVertexNum; i++)
 	{
-	printf("%10f", mpVertex[i].mX);
-	printf("%10f", mpVertex[i].mY);
-	printf("%10f\n", mpVertex[i].mZ);
+		printf("%10f", mpVertex[i].mX);
+		printf("%10f", mpVertex[i].mY);
+		printf("%10f\n", mpVertex[i].mZ);
 	}
 	mFaceNum = model->GetIntToken();  //面数読み込み
 	//頂点数は1面に3頂点
 	mpVertexIndex = new int[mFaceNum * 3];
-		for (int i = 0; i < mFaceNum * 3; i+=3){
-			model->GetToken(); //頂点数読み飛ばす
-			mpVertexIndex[i] = model->GetIntToken();
-			mpVertexIndex[i + 1] = model->GetIntToken();
-			mpVertexIndex[i + 2] = model->GetIntToken();
+	for (int i = 0; i < mFaceNum * 3; i += 3){
+		model->GetToken(); //頂点数読み飛ばす
+		mpVertexIndex[i] = model->GetIntToken();
+		mpVertexIndex[i + 1] = model->GetIntToken();
+		mpVertexIndex[i + 2] = model->GetIntToken();
 	}
-		printf("FaceNum,%d\n", mFaceNum);
+	printf("FaceNum,%d\n", mFaceNum);
 	for (int i = 0; i < mFaceNum * 3; i += 3)
 	{
 		printf("%10d", mpVertexIndex[i]);
-		printf("%10d", mpVertexIndex[i+1]);
-		printf("%10d\n", mpVertexIndex[i+2]);
+		printf("%10d", mpVertexIndex[i + 1]);
+		printf("%10d\n", mpVertexIndex[i + 2]);
 	}
 	model->GetToken();   //MeshNormals
 	if (strcmp(model->mToken, "MeshNormals") == 0){
@@ -252,11 +252,28 @@ void CMesh::Init(CModelX*model){
 		model->GetToken();   //}
 	}
 	printf("NormalNum:%d\n", mNormalNum);
-	for (int i = 0; i < mNormalNum; i ++)
+	for (int i = 0; i < mNormalNum; i++)
 	{
 		printf("%10f", mpNormal[i].mX);
 		printf("%10f", mpNormal[i].mY);
 		printf("%10f\n", mpNormal[i].mZ);
 	}
-	
 }
+void CMesh::Render(){
+	/*頂点データ、法線データの配列を有効にする*/
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	/*頂点データ、法線データの場所を指定する*/
+	glVertexPointer(3, GL_FLOAT, 0, mpVertex);
+	glNormalPointer(GL_FLOAT, 0, mpNormal);
+
+	/*頂点インデックスの場合を指定して図形を描画する*/
+	glDrawElements(GL_TRIANGLES, 3 * mFaceNum,
+		GL_UNSIGNED_INT, mpVertexIndex);
+
+	/*頂点データ、法線データの配列を無効にする*/
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+}
+

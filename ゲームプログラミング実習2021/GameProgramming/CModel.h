@@ -68,5 +68,14 @@ public:
 	float GetFloatToken();
 	//整数データの取得
 	int GetIntToken();
+	/*
+	Render
+	全てのフレームの描画処理を呼び出す
+	*/
+	void CModelX::Render(){
+		for (int i = 0; i < mFrame.size(); i++){
+			mFrame[i]->Render();
+		}
+	}
 };
 #endif

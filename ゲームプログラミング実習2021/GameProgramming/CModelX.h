@@ -36,9 +36,11 @@ public:
 		SAFE_DELETE_ARRAY(mpVertexIndex);
 		SAFE_DELETE_ARRAY(mpNormal);
 	}
+	void Render();
 	//“Ç‚İ‚İˆ—
 	void Init(CModelX*model);
 };
+
 class CModelXFrame{
 public:
 	std::vector<CModelXFrame*>mChild;
@@ -57,6 +59,10 @@ public:
 		}
 		//–¼‘O‚ÌƒGƒŠƒA‚ğ‰ğ•ú‚·‚é
 		SAFE_DELETE_ARRAY(mpName);
+	}
+	void CModelXFrame::Render(){
+		if (mMesh.mFaceNum != 0)
+			mMesh.Render();
 	}
 };
 
