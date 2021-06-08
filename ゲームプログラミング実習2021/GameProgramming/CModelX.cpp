@@ -4,6 +4,7 @@
 #include<string.h>
 #include"CModel.h"
 #include"CMatrix.h"
+#include"CMaterial.h"
 
 void CModelX::Load(char*file){
 	//
@@ -220,7 +221,12 @@ void CMesh::Init(CModelX*model){
 		printf("%10d", mpVertexIndex[i + 1]);
 		printf("%10d\n", mpVertexIndex[i + 2]);
 	}
+//文字がなくなったら終わり
+while (model->mpPointer != '\0'){
 	model->GetToken();   //MeshNormals
+	//}かっこの場合は終了
+	if (strchr(model->mToken, '}'))
+		break;
 	if (strcmp(model->mToken, "MeshNormals") == 0){
 		model->GetToken();
 		//法線データ数を取得
@@ -251,6 +257,28 @@ void CMesh::Init(CModelX*model){
 		delete[] pNormal;
 		model->GetToken();   //}
 	}
+		//MashMaterialListのとき
+		else if (strcmp(model->mToken, "MeshMaterialList") == 0){
+			model->GetToken();//{
+			//Materialの数
+			mMaterialNum = model->GetIntToken();
+			//FaceNum
+			mMaterialIndexNum = model->GetIntToken();
+			//マテリアルインデックスの作成
+			mpMaterialIndex = new int[mMaterialIndexNum];
+			for (int i = 0; i< mMaterialIndexNum; i++){
+				mpMaterialIndex[i] = model->GetIntToken();
+			}
+			//マテリアルデータの作成
+			for (int i = 0; i < mMaterialNum; i++){
+				model->GetToken();  //Material
+				if (strcmp(model->mToken, "Material") == 0){
+					mMaterial.push_back(new CMaterial(model));
+				}
+			}
+			model->GetToken();  //}End of MeshMaterialList
+		}
+	}
 	printf("NormalNum:%d\n", mNormalNum);
 	for (int i = 0; i < mNormalNum; i++)
 	{
@@ -269,11 +297,13 @@ void CMesh::Render(){
 	glNormalPointer(GL_FLOAT, 0, mpNormal);
 
 	/*頂点インデックスの場合を指定して図形を描画する*/
-	glDrawElements(GL_TRIANGLES, 3 * mFaceNum,
-		GL_UNSIGNED_INT, mpVertexIndex);
-
+	for (int i = 0; i < mFaceNum; i++){
+		//マテリアルを適用する
+	mMaterial[mpMaterialIndex[i]]->Enabled();
+	glDrawElements(GL_TRIANGLES, 3 , 
+		GL_UNSIGNED_INT, (mpVertexIndex +i*3));
+	}
 	/*頂点データ、法線データの配列を無効にする*/
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
-

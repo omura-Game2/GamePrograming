@@ -18,7 +18,6 @@ public:
 	float *mpTextureCoord; //テクスチャマッピング
 	//デフォルトコンストラクタ
 	CModel();
-
 	//三角形の可変長配列
 	std::vector<CTriangle> mTriangles;
 	//マテリアルポインタの可変長配列

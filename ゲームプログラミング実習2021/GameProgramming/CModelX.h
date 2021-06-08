@@ -11,7 +11,8 @@
 #include"CVector.h"
 //配列のサイズ取得をマクロ化
 #define ARRAY_SIZE(a)(sizeof(a)/sizeof(a[0]))
-class CModelX; 
+class CModelX; //クラスの宣言
+class CMaterial;//クラスの宣言
 //CMeshクラスの定義
 class CMesh{
 public:
@@ -21,6 +22,10 @@ public:
 	int*mpVertexIndex;
 	int mNormalNum;
 	CVector*mpNormal;
+	int mMaterialNum;//マテリアル数
+	int mMaterialIndexNum;//マテリアル番号(面数)
+	int*mpMaterialIndex;//マテリアル番号
+	std::vector<CMaterial*>mMaterial;//マテリアルデータ
 	//コンストラクタ
 	CMesh()
 		:mVertexNum(0)
@@ -29,12 +34,16 @@ public:
 		, mpVertexIndex(nullptr)
 		, mNormalNum(0)
 		, mpNormal(nullptr)
+		, mMaterialNum(0)
+		, mMaterialIndexNum(0)
+		, mpMaterialIndex(nullptr)
 	{}
 	//デストラクタ
 	~CMesh(){
 		SAFE_DELETE_ARRAY(mpVertex);
 		SAFE_DELETE_ARRAY(mpVertexIndex);
 		SAFE_DELETE_ARRAY(mpNormal);
+		SAFE_DELETE_ARRAY(mpMaterialIndex);
 	}
 	void Render();
 	//読み込み処理
