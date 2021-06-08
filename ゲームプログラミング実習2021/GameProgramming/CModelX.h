@@ -74,5 +74,45 @@ public:
 			mMesh.Render();
 	}
 };
+/*
+CModelX
+Xファイル形式の3Dモデルデータをプログラムで認識する
+*/
+class CModelX{
+public:
+	char*mpPointer;
+	char mToken[1024];
+	std::vector<CModelXFrame*>mFrame;
 
+	CModelX()
+		:mpPointer(0)
+	{}
+
+	~CModelX(){
+		if (mFrame.size() > 0)
+		{
+			delete mFrame[0];
+		}
+	}
+
+	//ファイル読み込み
+	void Load(char*file);
+	//単語の取り出し
+	void GetToken();
+	//ノードの読み込み
+	void SkipNode();
+	//浮動少数点データの取得
+	float GetFloatToken();
+	//整数データの取得
+	int GetIntToken();
+	/*
+	Render
+	全てのフレームの描画処理を呼び出す
+	*/
+	void CModelX::Render(){
+		for (int i = 0; i < mFrame.size(); i++){
+			mFrame[i]->Render();
+		}
+	}
+};
 #endif

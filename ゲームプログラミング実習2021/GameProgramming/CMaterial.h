@@ -2,6 +2,8 @@
 #define CMATERIAL_H
 #include "CTexture.h"
 #include"CModel.h"
+#include"CModelX.h"
+
 /*
 マテリアルクラス
 マテリアルのデータを扱う
@@ -17,10 +19,7 @@ public:
 	//拡散光の色RGBA
 	float mDiffuse[4];
 	//デフォルトコンストラクタ
-	CMaterial()
-		:mVertexNum(0)
-		, mpTextureFilename(nullptr)
-	{}
+	CMaterial();
 	//マテリアルを有効にする
 	void Enabled();
 	//テクスチャを読み込む

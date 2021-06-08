@@ -1,6 +1,7 @@
 #ifndef CRES_H
 #define CRES_H
 #include"CModel.h"
+#include"CModelX.h"
 
 class CRes{
 public:
