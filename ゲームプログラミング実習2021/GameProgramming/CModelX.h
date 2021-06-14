@@ -26,6 +26,7 @@ public:
 	int mMaterialIndexNum;//マテリアル番号(面数)
 	int*mpMaterialIndex;//マテリアル番号
 	std::vector<CMaterial*>mMaterial;//マテリアルデータ
+	std::vector<CSkinWeights*>mSkinWeights;
 	//コンストラクタ
 	CMesh()
 		:mVertexNum(0)
@@ -44,6 +45,10 @@ public:
 		SAFE_DELETE_ARRAY(mpVertexIndex);
 		SAFE_DELETE_ARRAY(mpNormal);
 		SAFE_DELETE_ARRAY(mpMaterialIndex);
+		//スキンウェイトの削除
+		for (int i = 0; i < mSkinWeights.size(); i++){
+			delete mSkinWeights[i];
+		}
 	}
 	void Render();
 	//読み込み処理
@@ -113,6 +118,64 @@ public:
 		for (int i = 0; i < mFrame.size(); i++){
 			mFrame[i]->Render();
 		}
+	}
+};
+/*
+CSkinWeights
+スキンウェイトクラス
+*/
+class CSkinWeights{
+public:
+	char*mpFrameName;  //フレーム名
+	int mFrameIndex;  //フレーム番号
+	int mIndexNum;  //頂点番号
+	int *mpIndex;  //頂点番号配列
+	float *mpWeight; //頂点ウェイト配列
+	CMatrix mOffset; //オフセットマトリックス
+
+	CSkinWeights(CModelX*model);
+
+	~CSkinWeights(){
+		SAFE_DELETE_ARRAY(mpFrameName);
+		SAFE_DELETE_ARRAY(mpIndex);
+		SAFE_DELETE_ARRAY(mpWeight);
+	}
+	/*
+	CSkinWeights
+	スキンウェイトの読み込み
+	*/
+	CSkinWeights::CSkinWeights(CModelX*model)
+		: mpFrameName(0)
+		, mFrameIndex(0)
+		, mIndexNum(0)
+		, mpIndex(nullptr)
+		, mpWeight(nullptr)
+	{
+		model->GetToken();  //{
+		model->GetToken();  //FrameName
+		//フレーム名エリア確保、設定
+		mpFrameName = new char[strlen(model->mToken) + 1];
+		strcpy(mpFrameName, model->mToken);
+		//頂点番号数取得
+		mIndexNum = model->GetIntToken();
+		//頂点番号数が0を超える
+		if (mIndexNum > 0){
+			//頂点番号と頂点ウェイトのエリア確保
+			mpIndex = new int[mIndexNum];
+			mpWeight = new float[mIndexNum];
+			//頂点番号取得
+			for (int i = 0; i < mIndexNum; i++)
+				mpIndex[i] = model->GetFloatToken();
+			//頂点ウェイト取得
+			for (int i = 0; i < mIndexNum; i++)
+				mpWeight[i] = model->GetFloatToken();
+		}
+		//オフセット行列取得
+		for (int i = 0; i < 16; i++){
+			mOffset.mF[i] = model->GetFloatToken();
+		}
+		model->GetToken();   //}
+
 	}
 };
 #endif

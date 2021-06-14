@@ -278,6 +278,14 @@ while (model->mpPointer != '\0'){
 			}
 			model->GetToken();  //}End of MeshMaterialList
 		}
+	//SkinWeightsの時
+	else if (strcmp(model->mToken, "SkinWeights") == 0){
+		//CSkinWeightsクラスのインスタンスを作成し、配列に追加
+		mSkinWeights.push_back(new CSkinWeights(model));
+	}
+	else{
+		//以外のノードは読み飛ばし
+		model->SkipNode();
 	}
 	printf("NormalNum:%d\n", mNormalNum);
 	for (int i = 0; i < mNormalNum; i++)
@@ -286,6 +294,15 @@ while (model->mpPointer != '\0'){
 		printf("%10f", mpNormal[i].mY);
 		printf("%10f\n", mpNormal[i].mZ);
 	}
+}
+#ifndef _DEBUG
+	printf("SkinWeights:%d\n", mpFrameName);
+	for (int i = 0; i < mIndexNum; i++){
+		printf("%d", mpIndex[i]);
+		printf("%10f\n", mpWeight[i]);
+	}
+	mOffset.Print();
+#endif
 }
 void CMesh::Render(){
 	/*頂点データ、法線データの配列を有効にする*/
