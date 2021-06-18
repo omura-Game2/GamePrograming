@@ -48,7 +48,7 @@ public:
 	int mMaterialIndexNum;//マテリアル番号(面数)
 	int*mpMaterialIndex;//マテリアル番号
 	std::vector<CMaterial*>mMaterial;//マテリアルデータ
-	std::vector<CSkinWeights*>mSkinWeights;
+	std::vector<CSkinWeights*>mSkinWeights;//スキンウェイト
 	//コンストラクタ
 	CMesh()
 		:mVertexNum(0)
