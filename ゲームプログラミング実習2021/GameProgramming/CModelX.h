@@ -33,8 +33,8 @@ public:
 		SAFE_DELETE_ARRAY(mpIndex);
 		SAFE_DELETE_ARRAY(mpWeight);
 	}
-
 };
+
 //CMeshクラスの定義
 class CMesh{
 public:
@@ -76,7 +76,9 @@ public:
 	//読み込み処理
 	void Init(CModelX*model);
 };
-
+/*
+CModelXFrame
+*/
 class CModelXFrame{
 public:
 	std::vector<CModelXFrame*>mChild;
@@ -101,6 +103,7 @@ public:
 			mMesh.Render();
 	}
 };
+
 /*
 CModelX
 Xファイル形式の3Dモデルデータをプログラムで認識する

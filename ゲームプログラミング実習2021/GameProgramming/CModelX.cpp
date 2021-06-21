@@ -214,14 +214,14 @@ CSkinWeights::CSkinWeights(CModelX*model)
 	}
 	model->GetToken();   //}
 
-#ifndef _DEBUG
+//#ifndef _DEBUG
 	printf("SkinWeights:%d\n", mpFrameName);
 	for (int i = 0; i < mIndexNum; i++){
 		printf("%d", mpIndex[i]);
 		printf("%10f\n", mpWeight[i]);
 	}
 	mOffset.Print();
-#endif
+//#endif
 }
 /*
 Init
@@ -323,15 +323,15 @@ while (model->mpPointer != '\0'){
 			}
 			model->GetToken();  //}End of MeshMaterialList
 		}
-	//SkinWeightsの時
-	else if (strcmp(model->mToken, "SkinWeights") == 0){
-		//CSkinWeightsクラスのインスタンスを作成し、配列に追加
-		mSkinWeights.push_back(new CSkinWeights(model));
-	}
-	else{
-		//以外のノードは読み飛ばし
-		model->SkipNode();
-	}
+		//SkinWeightsの時
+		else if (strcmp(model->mToken, "SkinWeights") == 0){
+			//CSkinWeightsクラスのインスタンスを作成し、配列に追加
+			mSkinWeights.push_back(new CSkinWeights(model));
+		}
+		else{
+			//以外のノードは読み飛ばし
+			model->SkipNode();
+		}
 	printf("NormalNum:%d\n", mNormalNum);
 	for (int i = 0; i < mNormalNum; i++)
 	{
