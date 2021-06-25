@@ -105,6 +105,22 @@ public:
 };
 
 /*
+CAnimationSet
+アニメーションセット
+*/
+class CAnimationSet{
+public:
+	//アニメーションセット名
+	char*mpName;
+
+	CAnimationSet(CModelX*model);
+
+	~CAnimationSet(){
+		SAFE_DELETE_ARRAY(mpName);
+	}
+};
+
+/*
 CModelX
 Xファイル形式の3Dモデルデータをプログラムで認識する
 */
@@ -113,6 +129,8 @@ public:
 	char*mpPointer;
 	char mToken[1024];
 	std::vector<CModelXFrame*>mFrame;
+	//アニメーションセットの配列
+	std::vector<CAnimationSet*>mAnimationSet;
 
 	CModelX()
 		:mpPointer(0)
@@ -122,6 +140,9 @@ public:
 		if (mFrame.size() > 0)
 		{
 			delete mFrame[0];
+		}
+		for (int i = 0; i < mAnimationSet.size(); i++){
+			delete mAnimationSet[i];
 		}
 	}
 
