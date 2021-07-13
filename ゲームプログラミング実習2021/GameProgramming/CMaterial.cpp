@@ -50,6 +50,33 @@ void CMaterial::Disabled()
 		glDisable(GL_TEXTURE_2D);
 	}
 }
+
+CMatrix CMatrix::operator*(const float& f)
+{
+	CMatrix tmp;  //リターン用のCMatrix変数
+	for (int i = 0; i < 16; i++)
+	{
+		tmp.mF[i] = mF[i] * f;
+	}
+	return tmp;
+}
+CMatrix CMatrix::operator+(const CMatrix& m)
+{
+	CMatrix tmp;
+	for (int i = 0; i < 16; i++)
+	{
+		tmp.mF[i] = mF[i] + m.mF[i];
+	}
+	return tmp;
+}
+void CMatrix::operator+=(const CMatrix& m)
+{
+	for (int i = 0; i < 16; i++)
+	{
+		mF[i] += m.mF[i];
+	}
+}
+
 /*
 Materialデータの読み込みと設定
 */
