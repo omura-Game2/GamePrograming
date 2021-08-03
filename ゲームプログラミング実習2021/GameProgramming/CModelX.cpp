@@ -123,7 +123,7 @@ CAnimation::CAnimation(CModelX*model)
 	}
 
 #ifdef _DEBUG
-	printf("Animation:%s\n", mpFrameName);
+	//printf("Animation:%s\n", mpFrameName);
 	mpKey[0].mMatrix.Print();
 #endif
 }
@@ -168,10 +168,14 @@ CAnimationSet::CAnimationSet(CModelX*model)
 		if (strcmp(model->mToken, "Animation") == 0){
 			//Animation要素読み込み
 			mAnimation.push_back(new CAnimation(model));
+			
 		}
+		//終了時間設定
+		mMaxTime = mAnimation[0]->mpKey[mAnimation[0]->mKeyNum - 1].mTime;
 	}
+
 #ifdef _DEBUG
-	printf("AnimationSet:%s\n",mpName);
+	//printf("AnimationSet:%s\n",mpName);
 #endif
 }
 
@@ -182,7 +186,7 @@ void CModelX::Load(char*file){
 	FILE*fp;
 	fp = fopen(file, "rb");
 	if (fp == NULL){
-		printf("fopen error:%s\n", file);
+		//printf("fopen error:%s\n", file);
 		return;
 	}
 	//ファイルの最後へ移動
@@ -204,9 +208,17 @@ void CModelX::Load(char*file){
 
 	//文字列の最後まで繰り返し
 	while (*mpPointer != '\0'){
-		GetToken();
+		GetToken(); //単語の取得
+		//template 読み飛ばし
+		if (strcmp(mToken, "template") == 0){
+			SkipNode();
+		}
+		//Materialの時
+		else if (strcmp(mToken, "Material") == 0){
+			new CMaterial(this);
+		}
 		//単語がFrameの場合
-		if (strcmp(mToken, "Frame") == 0){
+		else if (strcmp(mToken, "Frame") == 0){
 			//フレームを作成する
 			new CModelXFrame(this);
 		}
@@ -214,6 +226,8 @@ void CModelX::Load(char*file){
 		else if (strcmp(mToken, "AnimationSet") == 0){
 			new CAnimationSet(this);
 		}
+		//スキンウェイトのフレーム番号設定
+		SetSkinWeightFrameIndex();
 	}
 	SAFE_DELETE_ARRAY(buf);
 }
@@ -332,7 +346,7 @@ CModelXFrame::CModelXFrame(CModelX*model){
 	}
 	//デバッグバージョンのみ有効
 #ifdef _DEBUG
-	printf("%s\n", mpName);
+	//printf("%s\n", mpName);
 	mTransformMatrix. Print();
 #endif
 }
@@ -349,7 +363,8 @@ void CModelXFrame::AnimateCombined(CMatrix*parent){
 		mChild[i]->AnimateCombined(&mCombinedMatrix);
 	}
 #ifdef _DEBUG
-	
+	//printf("Frame:%s\n", mpName); 
+	mCombinedMatrix.Print();
 #endif
 }
 
@@ -371,6 +386,87 @@ GetIntToken
 int CModelX::GetIntToken(){
 	GetToken();
 	return atof(mToken);
+}
+
+/*
+SetSkinWeightFrameIndex
+スキンウェイトにフレーム番号を設定する
+*/
+void CModelX::SetSkinWeightFrameIndex(){
+	//フレーム数分繰り返し
+	for (int i = 0; i < mFrame.size(); i++){
+		//メッシュに面があれば
+		if (mFrame[i]->mMesh.mFaceNum >0){
+			//スキンウェイト分繰り返し
+			for (int j = 0; j < mFrame[i]->mMesh.mSkinWeights.size(); j++){
+				//フレーム名のフレームを取得する
+				CModelXFrame*frame = FindFrame(mFrame[i]->mMesh.mSkinWeights[j]->mpFrameName);
+				//フレーム番号を設定する
+				mFrame[i]->mMesh.mSkinWeights[j]->mFrameIndex = frame->mIndex;
+			}
+		}
+	}
+}
+
+/* AnimateVertex 頂点にアニメーションを適用　*/
+void CMesh::AnimateVertex(CModelX*model){
+	//アニメーション用の頂点エリア
+	memset(mpAnimateVertex, 0, sizeof(CVector)*mVertexNum);
+	memset(mpAnimateNormal, 0, sizeof(CVector)*mNormalNum);
+	//スキンウェイト分繰り返し
+	for (int i = 0; i < mSkinWeights.size(); i++){
+		//フレーム番号取得
+		int frameIndex = mSkinWeights[i]->mFrameIndex;
+		//オフセット行列とフレーム合成行列を合成
+		CMatrix mSkinningMatrix = mSkinWeights[i]->mOffset*model->mFrame[frameIndex]->mCombinedMatrix;
+		//頂点数分繰り返し
+		for (int j = 0; j < mSkinWeights[i]->mIndexNum; j++){
+			//頂点番号取得
+			int index = mSkinWeights[i]->mpIndex[j];
+			//重み取得
+			float weight = mSkinWeights[i]->mpWeight[j];
+			//頂点と法線を更新する
+			mpAnimateVertex[index] += mpVertex[index] * mSkinningMatrix * weight;
+			mpAnimateNormal[index] += mpNormal[index] * mSkinningMatrix * weight;
+		}
+	}
+	//法線を正規化する
+	for (int i = 0; i < mNormalNum; i++){
+		mpAnimateNormal[i] = mpAnimateNormal[i].Normalize();
+	}
+}
+
+/*
+AnimateVertex
+頂点にアニメーションを適用する
+*/
+void CModelX::AnimateVertex(){
+	//フレーム数分繰り返し
+	for (int i = 0; i < mFrame.size(); i++){
+		//メッシュに面があれば
+		if (mFrame[i]->mMesh.mFaceNum>0){
+			//頂点をアニメーションで更新する
+			mFrame[i]->mMesh.AnimateVertex(this);
+		}
+	}
+}
+
+/*
+Find Material
+マテリアル名に該当するマテリアルを返す
+*/
+CMaterial*CModelX::FindMaterial(char*name){
+	//マテリアル配列のイテレーター作成
+	std::vector<CMaterial*>::iterator itr;
+	//マテリアル配列を先頭から順に検索
+	for (itr = mMaterial.begin(); itr != mMaterial.end(); itr++){
+		//名前が一致すればマテリアルのポインタを返却
+		if (strcmp(name, (*itr)->mName) == 0){
+			return*itr;
+		}
+	}
+	//無いときはNULL
+	return NULL;
 }
 
 /*
@@ -410,10 +506,10 @@ CSkinWeights::CSkinWeights(CModelX*model)
 	model->GetToken();   //}
 
 #ifdef _DEBUG
-	printf("SkinWeights:%s\n", mpFrameName);
+	//printf("SkinWeights:%s\n", mpFrameName);
 	for (int i = 0; i < mIndexNum; i++){
-		printf("%d", mpIndex[i]);
-		printf("%10f\n", mpWeight[i]);
+		//printf("%d", mpIndex[i]);
+		//printf("%10f\n", mpWeight[i]);
 	}
 	mOffset.Print();
 #endif
@@ -433,18 +529,19 @@ void CMesh::Init(CModelX*model){
 	mVertexNum = model->GetIntToken();
 	//頂点数分エリアを確保
 	mpVertex = new CVector[mVertexNum];
+	mpAnimateVertex = new CVector[mVertexNum];
 	//頂点数分データを取り込む
 	for (int i = 0; i < mVertexNum; i++){
 		mpVertex[i].mX = model->GetFloatToken();
 		mpVertex[i].mY = model->GetFloatToken();
 		mpVertex[i].mZ = model->GetFloatToken();
 	}
-	printf("VertexNum,%d\n", mVertexNum);
+	//printf("VertexNum,%d\n", mVertexNum);
 	for (int i = 0; i < mVertexNum; i++)
 	{
-		printf("%10f", mpVertex[i].mX);
-		printf("%10f", mpVertex[i].mY);
-		printf("%10f\n", mpVertex[i].mZ);
+		//printf("%10f", mpVertex[i].mX);
+		//printf("%10f", mpVertex[i].mY);
+		//printf("%10f\n", mpVertex[i].mZ);
 	}
 	mFaceNum = model->GetIntToken();  //面数読み込み
 	//頂点数は1面に3頂点
@@ -455,49 +552,50 @@ void CMesh::Init(CModelX*model){
 		mpVertexIndex[i + 1] = model->GetIntToken();
 		mpVertexIndex[i + 2] = model->GetIntToken();
 	}
-	printf("FaceNum,%d\n", mFaceNum);
+	//printf("FaceNum,%d\n", mFaceNum);
 	for (int i = 0; i < mFaceNum * 3; i += 3)
 	{
-		printf("%10d", mpVertexIndex[i]);
-		printf("%10d", mpVertexIndex[i + 1]);
-		printf("%10d\n", mpVertexIndex[i + 2]);
+		//printf("%10d", mpVertexIndex[i]);
+		//printf("%10d", mpVertexIndex[i + 1]);
+		//printf("%10d\n", mpVertexIndex[i + 2]);
 	}
-//文字がなくなったら終わり
-while (model->mpPointer != '\0'){
-	model->GetToken();   //MeshNormals
-	//}かっこの場合は終了
-	if (strchr(model->mToken, '}'))
-		break;
-	if (strcmp(model->mToken, "MeshNormals") == 0){
-		model->GetToken();
-		//法線データ数を取得
-		mNormalNum = model->GetIntToken();
-		//法線のデータを配列に取り込む
-		CVector*pNormal = new CVector[mNormalNum];
-		for (int i = 0; i < mNormalNum; i++){
-			pNormal[i].mX = model->GetFloatToken();
-			pNormal[i].mY = model->GetFloatToken();
-			pNormal[i].mZ = model->GetFloatToken();
-		}
-		//法線数=面数x3
-		mNormalNum = model->GetIntToken() * 3;//FanceNum
-		int ni;
-		//頂点毎に法線データを設定する
-		mpNormal = new CVector[mNormalNum];
-		for (int i = 0; i < mNormalNum; i += 3){
-			model->GetToken();//3
-			ni = model->GetIntToken();
-			mpNormal[i] = pNormal[ni];
+	//文字がなくなったら終わり
+	while (model->mpPointer != '\0'){
+		model->GetToken();   //MeshNormals
+		//}かっこの場合は終了
+		if (strchr(model->mToken, '}'))
+			break;
+		if (strcmp(model->mToken, "MeshNormals") == 0){
+			model->GetToken();
+			//法線データ数を取得
+			mNormalNum = model->GetIntToken();
+			//法線のデータを配列に取り込む
+			CVector*pNormal = new CVector[mNormalNum];
+			for (int i = 0; i < mNormalNum; i++){
+				pNormal[i].mX = model->GetFloatToken();
+				pNormal[i].mY = model->GetFloatToken();
+				pNormal[i].mZ = model->GetFloatToken();
+			}
+			//法線数=面数x3
+			mNormalNum = model->GetIntToken() * 3;//FanceNum
+			int ni;
+			//頂点毎に法線データを設定する
+			mpNormal = new CVector[mNormalNum];
+			mpAnimateNormal = new CVector[mNormalNum];
+			for (int i = 0; i < mNormalNum; i += 3){
+				model->GetToken();//3
+				ni = model->GetIntToken();
+				mpNormal[i] = pNormal[ni];
 
-			ni = model->GetIntToken();
-			mpNormal[i + 1] = pNormal[ni];
+				ni = model->GetIntToken();
+				mpNormal[i + 1] = pNormal[ni];
 
-			ni = model->GetIntToken();
-			mpNormal[i + 2] = pNormal[ni];
+				ni = model->GetIntToken();
+				mpNormal[i + 2] = pNormal[ni];
+			}
+			delete[] pNormal;
+			model->GetToken();   //}
 		}
-		delete[] pNormal;
-		model->GetToken();   //}
-	}
 		//MashMaterialListのとき
 		else if (strcmp(model->mToken, "MeshMaterialList") == 0){
 			model->GetToken();//{
@@ -507,7 +605,7 @@ while (model->mpPointer != '\0'){
 			mMaterialIndexNum = model->GetIntToken();
 			//マテリアルインデックスの作成
 			mpMaterialIndex = new int[mMaterialIndexNum];
-			for (int i = 0; i< mMaterialIndexNum; i++){
+			for (int i = 0; i < mMaterialIndexNum; i++){
 				mpMaterialIndex[i] = model->GetIntToken();
 			}
 			//マテリアルデータの作成
@@ -515,6 +613,13 @@ while (model->mpPointer != '\0'){
 				model->GetToken();  //Material
 				if (strcmp(model->mToken, "Material") == 0){
 					mMaterial.push_back(new CMaterial(model));
+				}
+				else{
+					//{ 既出
+					model->GetToken(); //MaterialName
+					mMaterial.push_back(
+						model->FindMaterial(model->mToken));
+					model->GetToken();  //}
 				}
 			}
 			model->GetToken();  //}End of MeshMaterialList
@@ -524,28 +629,43 @@ while (model->mpPointer != '\0'){
 			//CSkinWeightsクラスのインスタンスを作成し、配列に追加
 			mSkinWeights.push_back(new CSkinWeights(model));
 		}
+		//テクスチャ座標の時
+		else if (strcmp(model->mToken, "MeshTextureCoords") == 0){
+			model->GetToken();  //{
+			//テクスチャ座標数を取得
+			int textureCoordsNum = model->GetIntToken() * 2;
+			//テクスチャ座標のデータを配列に取り込む
+			mpTextureCoords = new float[textureCoordsNum];
+			for (int i = 0; i < textureCoordsNum; i++){
+				 mpTextureCoords[i] = model->GetFloatToken();
+			}
+			model->GetToken();  //}
+		}
 		else{
 			//以外のノードは読み飛ばし
 			model->SkipNode();
 		}
-	printf("NormalNum:%d\n", mNormalNum);
-	for (int i = 0; i < mNormalNum; i++)
-	{
-		printf("%10f", mpNormal[i].mX);
-		printf("%10f", mpNormal[i].mY);
-		printf("%10f\n", mpNormal[i].mZ);
+		//printf("NormalNum:%d\n", mNormalNum);
+		for (int i = 0; i < mNormalNum; i++)
+		{
+			//printf("%10f", mpNormal[i].mX);
+			//printf("%10f", mpNormal[i].mY);
+			//printf("%10f\n", mpNormal[i].mZ);
+		}
 	}
-  }
 }
 
 void CMesh::Render(){
 	/*頂点データ、法線データの配列を有効にする*/
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
+	//テクスチャマッピングの配列を有効にする
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	/*頂点データ、法線データの場所を指定する*/
-	glVertexPointer(3, GL_FLOAT, 0, mpVertex);
-	glNormalPointer(GL_FLOAT, 0, mpNormal);
+	glVertexPointer(3, GL_FLOAT, 0, mpAnimateVertex);
+	glNormalPointer(GL_FLOAT, 0, mpAnimateNormal);
+	glTexCoordPointer(2, GL_FLOAT, 0, mpTextureCoords);
 
 	/*頂点インデックスの場合を指定して図形を描画する*/
 	for (int i = 0; i < mFaceNum; i++){
@@ -553,11 +673,13 @@ void CMesh::Render(){
 	mMaterial[mpMaterialIndex[i]]->Enabled();
 	glDrawElements(GL_TRIANGLES, 3 , 
 		GL_UNSIGNED_INT, (mpVertexIndex +i*3));
+	mMaterial[mpMaterialIndex[i]]->Disabled();
 	}
 	/*頂点データ、法線データの配列を無効にする*/
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
+
 /*
 Render
 全てのフレームの描画処理を呼び出す

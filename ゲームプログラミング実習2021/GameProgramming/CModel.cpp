@@ -30,7 +30,7 @@ void CModel::Load(char *obj, char *mtl) {
 	//fpがNULLの時はエラー
 	if (fp == NULL) {
 		//コンソールにエラー出力して戻る
-		printf("%s file open error￥n", obj);
+		//printf("%s file open error￥n", obj);
 		return;
 	}
 
@@ -84,7 +84,7 @@ void CModel::Load(char *obj, char *mtl) {
 	//fpがNULLの時はエラー
 	if (fp == NULL) {
 		//コンソールにエラー出力して戻る
-		printf("%s file open error￥n", obj);
+		//printf("%s file open error￥n", obj);
 		return;
 	}
 

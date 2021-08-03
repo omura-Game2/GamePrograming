@@ -11,8 +11,13 @@
 #include<Windows.h>
 //
 #include"CKey.h"
-
+//
+#include"CMaterial.h"
+//
+#include"CXCharacter.h"
 CMatrix Matrix;
+//キャラクタのインスタンス
+CXCharacter mCharacter;
 
 CSceneGame::~CSceneGame() {
 
@@ -21,6 +26,8 @@ CSceneGame::~CSceneGame() {
 void CSceneGame::Init() {
 	//3Dモデルファイルの読み込み
 	CRes::sModelX.Load(MODEL_FILE);
+	//キャラクターにモデルを設定
+	mCharacter.Init(&CRes::sModelX);
 	//テキストフォントの読み込みと設定
 	mFont.LoadTexture("FontG.tga", 1, 4096 / 64);
 
@@ -28,14 +35,13 @@ void CSceneGame::Init() {
 
 
 void CSceneGame::Update() {
-	//最初のアニメーションの現在時間を45にする
-	CRes::sModelX.mAnimationSet[0]->mTime = 0;
-	//最初のアニメーションの重みを1.0(100%)にする
-	CRes::sModelX.mAnimationSet[0]->mWeight = 1.0f;
-	//フレームの変換行列をアニメーションで更新する
-	CRes::sModelX.AnimateFrame();
-	//フレームの合成行列を計算する
-	CRes::sModelX.mFrame[0]->AnimateCombined(&Matrix);
+	//歩くアニメーションに切り替える
+	if (mCharacter.mAnimationFrame >= mCharacter.mAnimationFrameSize){
+		mCharacter.ChangeAnimation(mCharacter.mAnimationIndex+1, true, 60);
+	}
+	//キャラクタークラスの更新
+	mCharacter.Update(CMatrix());
+	
 	//カメラのパラメータを作成する
 	CVector e, c, u;//視点、注視点、上方向
 	//視点を求める
@@ -68,7 +74,8 @@ void CSceneGame::Update() {
 	//行列設定
 	glMultMatrixf(Matrix.mF);
 	//モデル描画
-	CRes::sModelX.Render();
+	// CRes::sModelX.Render();
+	mCharacter.Render();
 
 	//2D描画開始
 	CUtil::Start2D(0, 800, 0, 600);
@@ -80,6 +87,6 @@ void CSceneGame::Update() {
 
 	return;
 
-
+	
 }
 

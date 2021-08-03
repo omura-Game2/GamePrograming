@@ -48,7 +48,7 @@ void CTexture::Load(const char* filename) {
 	fp = fopen(filename, "rb");
 	//エラーのときはリターン
 	if (!fp) {
-		printf("file not found:%s\n", filename);
+		//printf("file not found:%s\n", filename);
 		return;
 	}
 	mpName = new char[strlen(filename) + 1];

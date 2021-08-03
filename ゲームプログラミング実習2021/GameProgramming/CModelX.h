@@ -1,7 +1,7 @@
 #ifndef CMODELX_H
 #define CMODELX_H
 
-#define MODEL_FILE "sample.blend.x"
+#define MODEL_FILE "ラグナ.x"
 
 //領域解放をマクロ化
 #define SAFE_DELETE_ARRAY(a){if(a)delete[]a;a=0;}
@@ -49,6 +49,12 @@ public:
 	int*mpMaterialIndex;//マテリアル番号
 	std::vector<CMaterial*>mMaterial;//マテリアルデータ
 	std::vector<CSkinWeights*>mSkinWeights;//スキンウェイト
+	CVector*mpAnimateVertex;  //アニメーション用頂点
+	CVector*mpAnimateNormal;  //アニメーション用法線
+	//テクスチャ座標データ
+	float*mpTextureCoords;
+	//頂点にアニメーション適用
+	void AnimateVertex(CModelX*model);
 	//コンストラクタ
 	CMesh()
 		:mVertexNum(0)
@@ -60,6 +66,9 @@ public:
 		, mMaterialNum(0)
 		, mMaterialIndexNum(0)
 		, mpMaterialIndex(nullptr)
+		, mpAnimateVertex(nullptr)
+		, mpAnimateNormal(nullptr)
+		, mpTextureCoords(nullptr)
 	{}
 	//デストラクタ
 	~CMesh(){
@@ -67,6 +76,9 @@ public:
 		SAFE_DELETE_ARRAY(mpVertexIndex);
 		SAFE_DELETE_ARRAY(mpNormal);
 		SAFE_DELETE_ARRAY(mpMaterialIndex);
+		SAFE_DELETE_ARRAY(mpAnimateVertex);
+		SAFE_DELETE_ARRAY(mpAnimateNormal);
+		SAFE_DELETE_ARRAY(mpTextureCoords);
 		//スキンウェイトの削除
 		for (int i = 0; i < mSkinWeights.size(); i++){
 			delete mSkinWeights[i];
@@ -76,6 +88,7 @@ public:
 	//読み込み処理
 	void Init(CModelX*model);
 };
+
 /*
 CModelXFrame
 */
@@ -175,7 +188,7 @@ public:
 	std::vector<CModelXFrame*>mFrame;
 	//アニメーションセットの配列
 	std::vector<CAnimationSet*>mAnimationSet;
-
+	std::vector<CMaterial*>mMaterial;
 
 	CModelX()
 		:mpPointer(0)
@@ -189,10 +202,19 @@ public:
 		for (int i = 0; i < mAnimationSet.size(); i++){
 			delete mAnimationSet[i];
 		}
+		//マテリアルの解放
+		for (int i = 0; i < mMaterial.size(); i++){
+			delete mMaterial[i];
+		}
 	}
 	//フレーム名に該当するフレームのアドレスを返す
 	CModelXFrame*FindFrame(char*name);
-
+	//マテリアルの検索
+	CMaterial*FindMaterial(char*name);
+	//スキンウェイトのフレーム番号設定
+	void SetSkinWeightFrameIndex();
+	//頂点にアニメーションを適用
+	void AnimateVertex();
 	//ファイル読み込み
 	void Load(char*file);
 	//単語の取り出し
@@ -204,6 +226,7 @@ public:
 	//整数データの取得
 	int GetIntToken();
 	void Render();
+
 	/*
 	AnimateFrame
 	フレームの変換行列をアニメーションデータで更新する
@@ -274,7 +297,7 @@ public:
 					//フレームを取得する
 					CAnimation*animation = anim->mAnimation[j];
 					CModelXFrame*frame = mFrame[animation->mFrameIndex];
-					printf("Frame:%s\n", frame->mpName);
+					//printf("Frame:%s\n", frame->mpName);
 					frame->mTransformMatrix.Print();
 				}
 			}

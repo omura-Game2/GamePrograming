@@ -138,19 +138,19 @@ void CPlayer::Render()
 
 	//Y座標の表示
 	//文字列の設定
-	sprintf(buf, "PY:%7.2f", mPosition.mY);
+	//printf(buf, "PY:%7.2f", mPosition.mY);
 	//文字列の描画
 	mText.DrawString(buf, 100, 30, 8, 16);
 
 	//X軸回転値の表示
 	//文字列の設定
-	sprintf(buf, "RX:%7.2f", mRotation.mX);
+    //printf(buf, "RX:%7.2f", mRotation.mX);
 	//文字列の描画
 	mText.DrawString(buf, 100, 0, 8, 16);
 	
 	//Y軸回転値の表示
 	//文字列の設定
-	sprintf(buf, "RY:%7.2f", mRotation.mY);
+	//printf(buf, "RY:%7.2f", mRotation.mY);
 	//文字列の描画
 	mText.DrawString(buf, 100, -100, 8, 16);
 
